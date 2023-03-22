@@ -1,6 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-    css: ['vuetify/lib/styles/main.sass'],
+    app: {
+        pageTransition: { name: 'slide-right', mode: 'out-in' }
+    },
+    css: ['vuetify/lib/styles/main.sass', '@mdi/font/css/materialdesignicons.min.css',],
     build: {
         transpile: ['vuetify'],
     },
@@ -11,5 +14,10 @@ export default defineNuxtConfig({
             'defineStore', // import { defineStore } from 'pinia'
         ],
     },
-    ssr: false
+    ssr: false,
+    vite: {
+        define: {
+            'process.env.DEBUG': false,
+        },
+    },
 })
