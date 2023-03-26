@@ -61,86 +61,11 @@
                 </v-row>
                 <v-row v-if="selectedPokemon">
                     <v-col :cols="12">
-                        <v-card color="#1C1B22">
-                            <v-container fluid>
-                                <v-row>
-                                    <v-col cols="6" :style="`background-color: ${typeColour(selectedPokemon.types[0].type.name)}`">
-                                        <v-card-text class="d-flex align-center justify-space-between pa-0" style="height: 250px;">
-                                            <div class="d-flex flex-column align-center">
-                                                <v-img 
-                                                    :src="selectedPokemon.sprites.other['official-artwork'].front_default"
-                                                    width="200px"
-                                                    aspect-ratio="1"
-                                                />
-                                                <v-card-title class="d-flex align-center justify-center pb-4">{{ selectedPokemon.name.toUpperCase() }}</v-card-title>
-                                            </div>
-                                            <div class="d-flex flex-column  align-center h-100">
-                                                <div class="d-flex flex-column w-100 mb-4">
-                                                    <div class="text-h6">Type:</div>
-                                                    <div class="stats-grid w-100">
-                                                        <v-chip 
-                                                            v-for="item in selectedPokemon.types" 
-                                                            :color="typeColour(item.type.name)"
-                                                            variant="elevated"
-                                                            class="text-white"
-                                                        >
-                                                            {{ item.type.name }}
-                                                        </v-chip>
-                                                    </div>
-                                                </div>
-                                                <div class="d-flex flex-column w-100">
-                                                    <div class="text-h6">Stats:</div>
-                                                    <div class="stats-grid">
-                                                        <v-chip 
-                                                            v-for="item in selectedPokemon.stats" 
-                                                            :color="statColour(item.stat.name)"
-                                                            variant="elevated"
-                                                        >
-                                                            {{ item.stat.name }}: {{ item.base_stat }}
-                                                        </v-chip>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="d-flex flex-column align-center h-100">
-                                                <div class="d-flex flex-column w-100 mb-4">
-                                                    <div class="text-h6">Ablities:</div>
-                                                    <div class="stats-grid w-100">
-                                                        <v-chip 
-                                                            v-for="item in selectedPokemon.abilities.filter((ability: any) => !ability.is_hidden)"
-                                                            color="#1C1B22"
-                                                            variant="elevated"
-                                                            class="text-white"
-                                                        >
-                                                            {{ item.ability.name }}
-                                                        </v-chip>
-                                                    </div>
-                                                </div>
-                                                <div class="d-flex flex-column w-100">
-                                                    <div class="text-h6">Hidden Ablities:</div>
-                                                    <div class="stats-grid w-100">
-                                                        <v-chip 
-                                                            v-for="item in selectedPokemon.abilities.filter((ability: any) => ability.is_hidden)"
-                                                            color="#1C1B22"
-                                                            variant="elevated"
-                                                            class="text-white"
-                                                        >
-                                                            {{ item.ability.name }}
-                                                        </v-chip>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </v-card-text>
-                                        
-                                    </v-col>
-                                    <v-col cols="6">
-                                    </v-col>
-                                </v-row>
-                            </v-container>
-                        </v-card>
+                        <SelectedPokemon />
                     </v-col>
                 </v-row>
                 <v-row>
-                    <v-col v-for="pokemon in relatedPokemon" cols="4">
+                    <!-- <v-col v-for="pokemon in relatedPokemon" cols="4">
                         <v-card color="#1C1B22" >
                             <v-card-text class="d-flex align-center justify-center" style="height: 100px;">
                                 <v-img 
@@ -151,12 +76,12 @@
                             </v-card-text>
                             <v-card-title class="d-flex align-center justify-center">{{ pokemon.name }}</v-card-title>
                         </v-card>
-                    </v-col>
+                    </v-col> -->
                 </v-row>
             </v-container>
             <v-row class="py-8" justify="center">
                 <v-col cols="2" class="d-flex align-end justify-center">
-                    <div class="arrow2" @click="scrollToTop">
+                    <div class="arrow2" @click="handleScrollToTop">
                         <span></span>
                         <span></span>
                         <span></span>
@@ -168,24 +93,37 @@
 </template>
 
 <script setup lang="ts">
+    // Virtual Dom References & use cases
     const headerTag = ref<null | HTMLDivElement>(null)
     const resultsSection = ref<null | HTMLDivElement>(null)
+
+    const scrollToResults = () => {
+        if (resultsSection.value) resultsSection.value.scrollIntoView({ behavior: 'smooth'})
+    }
+
+    const scrollToTop = () => {
+        if (headerTag.value) headerTag.value.scrollIntoView({ behavior: 'smooth'})
+    }
+
+    // Loaders
     const showPreloader = ref(true)
 
-    const { allPokemon } = usePokemon()
+    // ~/composables/usePokemon.ts
+    const { 
+        allPokemon,
+        selectedPokemon,
+        selectedPokemonSpecies,
+        selectedPokemonEvolutionChain,
+        setSelectedPokemon,
+        setSelectedPokemonSpecies,
+        setSelectedPokemonEvolutionChain,
+        statColour, 
+        typeColour 
+    } = usePokemon()
 
-    const matchedPokemon = ref<any>([])
-    const selectedPokemon = ref<any>(null)
-    const selectedPokemonSpecies = ref<any>(null)
-    const selectedPokemonEvolutionChain = ref<any>(null)
-
-    const relatedPokemon = ref([
-        { name: 'Charizard', type: 'Fire' },
-        { name: 'Bulbasaur', type: 'Grass' },
-        { name: 'Gyarados', type: 'Water' },
-    ])
-
+    // Search Input related
     const searchQuery = ref("")
+    const matchedPokemon = ref<any>([])
 
     watch(searchQuery, (newVal, oldVal) => {
         if (newVal.length > 0) {
@@ -194,65 +132,32 @@
         if (newVal.length === 0) matchedPokemon.value = []
     })
 
+    // Event handlers
     async function handleSubmit (e: any, pokemon: any) {
         try {
             e.preventDefault()
-            selectedPokemon.value = await $fetch(pokemon.url)
-            selectedPokemonSpecies.value = await $fetch(selectedPokemon.value.species.url)
-            selectedPokemonEvolutionChain.value = await $fetch(selectedPokemonSpecies.value.evolution_chain.url)
-            console.log("Selected pokemon", toRaw(selectedPokemon.value))
-            console.log("Selected pokemon species", toRaw(selectedPokemonSpecies.value))
-            console.log("Selected pokemon evolution chain", toRaw(selectedPokemonEvolutionChain.value))
-            if (resultsSection.value) {
-                resultsSection.value.scrollIntoView({ behavior: 'smooth'})
-            }
+            const newSelectedPokemon = await $fetch(pokemon.url)
+            setSelectedPokemon(newSelectedPokemon)
+
+            const newSelectedPokemonSpecies = await $fetch(newSelectedPokemon.species.url)
+            setSelectedPokemonSpecies(newSelectedPokemonSpecies)
+
+            const newSelectedPokemonEvolutionChain = await $fetch(newSelectedPokemonSpecies.evolution_chain.url)
+            setSelectedPokemonEvolutionChain(newSelectedPokemonEvolutionChain)
+            
+            scrollToResults()
         } catch(e) {
             console.log("Error after submitting pokemon", e)
         }
         
     }
 
-    async function getEvolutions(speciesUrl: string) {
-        try {
-            
-        } catch(e) {
-            console.log("Error getting evolution chain")
-        }
-    }
-
-    function statColour(statName: string) {
-        if (statName === 'hp') return 'green'
-        if (statName === 'attack') return 'red'
-        if (statName === 'special-attack') return 'pink'
-        if (statName === 'defense') return 'blue'
-        if (statName === 'special-defense') return 'indigo'
-        if (statName === 'speed') return 'teal'
-    }
-
-    function typeColour(typeName: string) {
-        if (typeName === 'grass') return '#2E7D32'
-        if (typeName === 'fire') return '#E53935'
-        if (typeName === 'psychic') return '#EC407A'
-        if (typeName === 'water') return '#2196F3'
-        if (typeName === 'ice') return '#B3E5FC'
-        if (typeName === 'dragon') return '#3F51B5'
-        if (typeName === 'electric') return '#FBC02D'
-        if (typeName === 'poison') return '#9C27B0'
-        if (typeName === 'ghost') return '#311B92'
-        if (typeName === 'dark') return '#212121'
-        if (typeName === 'ground') return '#4E342E'
-        if (typeName === 'rock') return '#8D6E63'
-        if (typeName === 'steel') return '#607D8B'
-        if (typeName === 'fairy') return '#F06292'
-        if (typeName === 'normal') return '#BDBDBD'
-        if (typeName === 'fighting') return '#BF360C'
-    }
-
-    const scrollToTop = (e: any) => {
+    const handleScrollToTop = (e: any) => {
         e.preventDefault
-        if (headerTag.value) headerTag.value.scrollIntoView({ behavior: 'smooth'})
+        scrollToTop()
     }
     
+    // Lifecycle
     onMounted(() => {
         setTimeout(function () {
             showPreloader.value = false
@@ -476,12 +381,6 @@ header {
             animation: flash 3s 0s infinite;
         }
     }
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-gap: 10px;
 }
 
 @keyframes flash {
