@@ -48,6 +48,8 @@
                                         color="#1C1B22"
                                         variant="elevated"
                                         class="text-white"
+                                        @click="handleAbility(item)"
+                                        prepend-icon="mdi-gesture-tap"
                                     >
                                         {{ item.ability.name }}
                                     </v-chip>
@@ -61,6 +63,8 @@
                                         color="#1C1B22"
                                         variant="elevated"
                                         class="text-white"
+                                        @click="handleAbility(item)"
+                                        prepend-icon="mdi-gesture-tap"
                                     >
                                         {{ item.ability.name }}
                                     </v-chip>
@@ -74,11 +78,65 @@
                 </v-col>
             </v-row>
         </v-container>
+        <v-expand-transition>
+            <v-card
+                v-show="overlay"
+                :class="`${overlay ? 'expand-reveal' : 'expand-close'}`"
+                class="d-flex flex-column justify-space-between"
+                style="height: 100%;"
+            >   
+                <v-card-title class="text-h4 text--primary mb-2 py-2">{{ firstLetterCapital(abilityName) }}</v-card-title>
+                <v-card-text>
+                    <p>{{ firstLetterCapital(abilityDescription) }}</p>
+                </v-card-text>
+                <v-card-actions class="py-4 d-flex">
+                    <v-btn
+                        variant="text"
+                        color="teal-accent-4"
+                        @click="handleOverlayClose"
+                    >
+                        Close
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-expand-transition>
     </v-card>
 </template>
 
 <script setup lang="ts">
     const { selectedPokemon, statColour, typeColour } = usePokemon()
+
+    // Ability expand overlay
+    //  --> State
+    const overlay = ref(false)
+    const abilityName = ref<string>('')
+    const abilityDescription = ref<string>('')
+
+    //  --> Methods
+    const handleOverlay = () => overlay.value = !overlay.value
+
+    const handleOverlayClose = () => {
+        abilityName.value = ''
+        abilityDescription.value = ''
+        overlay.value = !overlay.value
+    }
+
+    const handleAbility = async (item: any) => {
+        try {
+            const res = await $fetch(item.ability.url)
+            const name: string = item.ability.name
+            const description = res.effect_entries.find((x: any) => x.language.name === 'en').effect
+            abilityName.value = name
+            abilityDescription.value = description
+            handleOverlay()
+        } catch(e) {
+            console.log("Error fetching ability")
+        }
+    }
+
+    const firstLetterCapital = (text: string) => {
+        if (text) return text.charAt(0).toUpperCase() + text.slice(1);
+    }
 </script>
 
 <style lang="scss">
@@ -86,5 +144,37 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-gap: 10px;
+}
+
+.expand-reveal {
+    bottom: 0;
+    opacity: 1 !important;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    animation-name: expand;
+    animation-duration: 0.2s;
+    animation-fill-mode: forwards;
+}
+
+.expand-close {
+    bottom: 0;
+    opacity: 1 !important;
+    position: absolute;
+    width: 100%;
+    height: 0%;
+    animation-name: expand-close;
+    animation-duration: 0.2s;
+    animation-fill-mode: forwards;
+}
+
+@keyframes expand {
+    0%   {height: 0%;}
+    100% {height: 100%;}
+}
+
+@keyframes expand-close {
+    0%   {height: 100%;}
+    100% {height: 0%;}
 }
 </style>
