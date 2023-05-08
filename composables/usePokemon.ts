@@ -43,6 +43,7 @@ export const usePokemon = () => {
         if (typeName === 'fairy') return '#F06292'
         if (typeName === 'normal') return '#BDBDBD'
         if (typeName === 'fighting') return '#BF360C'
+        if (typeName === 'flying') return '#4DB6AC'
     }
 
     return {
